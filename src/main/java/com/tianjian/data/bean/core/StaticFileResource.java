@@ -24,11 +24,6 @@ public class StaticFileResource {
     private String type;
 
     /**
-     * 文件后缀
-     */
-    private String suffix;
-
-    /**
      * 文件名称
      */
     private String name;
@@ -47,14 +42,6 @@ public class StaticFileResource {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getSuffix() {
-        return suffix;
-    }
-
-    public void setSuffix(String suffix) {
-        this.suffix = suffix;
     }
 
     public String getName() {

@@ -1,4 +1,4 @@
-package com.tianjian;
+package com.tianjian.controller;
 
 import com.tianjian.data.bean.core.StaticFileResource;
 import com.tianjian.data.bean.relation.RealtionFile;
@@ -21,6 +21,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -54,7 +56,6 @@ public class FileUploadController {
     @GetMapping("/files/{filename:.+}")
     @ResponseBody
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-
         Resource file = storageService.loadAsResource(filename);
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + file.getFilename() + "\"").body(file);
@@ -66,25 +67,25 @@ public class FileUploadController {
             @RequestParam("relation_id") String relation_id,
             RedirectAttributes redirectAttributes
     ) throws NoSuchAlgorithmException {
-
         for(MultipartFile detail : file) {
+
             String filename = StringUtils.cleanPath(detail.getOriginalFilename());
             String digestName = MsgDigestDemo.getMsgDigestByMD5(relation_id + ":" + filename);
-
-            storageService.store(detail,digestName);
-
             StaticFileResource staticFileResource = new StaticFileResource();
-            staticFileResource.setType("img");
             staticFileResource.setResourceCode(digestName);
             staticFileResource.setName(filename);
-            staticFileResourceDao.save(staticFileResource);
+            if(staticFileResourceDao.findByResourceCode(digestName).size() == 0) {
+                staticFileResourceDao.save(staticFileResource);
+                storageService.store(detail,digestName);
+            }
 
-            RealtionFile realtionFile = new RealtionFile();
-            realtionFile.setRelationFileId(UUID.randomUUID().toString());
-            realtionFile.setRealtionId(relation_id);
-            realtionFile.setResourceCode(filename);
-            relationFileDao.save(realtionFile);
-
+            if(relationFileDao.findByRealtionIdAndResourceCode(relation_id, digestName).size() == 0) {
+                RealtionFile realtionFile = new RealtionFile();
+                realtionFile.setRelationFileId(UUID.randomUUID().toString());
+                realtionFile.setRealtionId(relation_id);
+                realtionFile.setResourceCode(digestName);
+                relationFileDao.save(realtionFile);
+            }
         }
 
         redirectAttributes.addFlashAttribute("message",
@@ -96,6 +97,15 @@ public class FileUploadController {
     @ExceptionHandler(StorageFileNotFoundException.class)
     public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException exc) {
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/findAll")
+    @ResponseBody
+    public Object getDataSource() {
+        List<Object> data= new ArrayList<Object>();
+        data.add(relationFileDao.findAll());
+        data.add(staticFileResourceDao.findAll());
+        return data;
     }
 
 }

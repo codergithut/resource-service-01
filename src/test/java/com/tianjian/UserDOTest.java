@@ -34,7 +34,6 @@ public class UserDOTest {
         StaticFileResource staticFileResource = new StaticFileResource();
         staticFileResource.setName("静态资源");
         staticFileResource.setResourceCode(UUID.randomUUID().toString());
-        staticFileResource.setSuffix("img");
         staticFileResource.setType("image");
 
         RealtionFile hotelImageFile = new RealtionFile();
